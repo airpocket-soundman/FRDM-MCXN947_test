@@ -1,0 +1,76 @@
+# --- ビルド成果物 ---
+build/
+Build/
+debug/
+Debug/
+release/
+Release/
+out/
+bin/
+obj/
+
+# --- コンパイル中間物 / オブジェクト ---
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.exe
+
+# --- リンカ・マップ・リスト ---
+*.map
+*.lst
+*.su
+
+# --- 実行イメージ(必要に応じて個別追跡) ---
+*.elf
+*.bin
+*.hex
+*.srec
+*.s19
+*.axf
+
+# --- IDE / エディタの個人設定 ---
+.metadata/
+.settings/
+*.launch
+.cproject
+.project
+__macosx/
+workspace_*/
+
+# VS Code 個人設定(任意深さで効くよう **/ 付き。tasks.json と mcuxpresso-tools.json はコミット可)
+**/.vscode/settings.json
+**/.vscode/c_cpp_properties.json
+**/.vscode/launch.json
+**/.vscode/.ropeproject/
+
+# JetBrains
+.idea/
+
+# MCUXpresso IDE(Eclipse 系)
+.mxproject
+
+# --- west / CMake / Ninja キャッシュ ---
+.west/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+.ninja_*
+build.ninja
+
+# CMake のユーザー個別 preset(SdkRootDirPath などローカル絶対パスを書く先)
+CMakeUserPresets.json
+
+# --- OS / 雑多 ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp
+*.swo
+
+# --- Claude Code ローカル設定 ---
+.claude/settings.local.json
