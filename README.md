@@ -4,6 +4,17 @@ NXP **FRDM-MCXN947** 評価ボード(MCXN947 / Cortex-M33 デュアルコア)で
 
 運用方針・ローカル SDK の場所・新 west レイアウトの要点・命名規則は **[CLAUDE.md](CLAUDE.md)** を参照。
 
+## サンプル取り込み方針(重要)
+
+MCUXpresso for VS Code の **Import Example** で選べる App type のうち、本リポでは:
+
+- **原本(`<NN>_<sample>`)**: Repository application でも Freestanding でも可
+- **改良版(`<NN+1>_<sample>_xxx`)**: **Freestanding application を原則とする**
+
+理由: Repository application で取り込むと SDK 由来ファイル(`board/hardware_init.c` / `pin_mux.c` / `peripherals.c` 等)が **SDK ツリーから直接参照**される構成になり、**ローカル `board/` 配下の編集がビルドに反映されない**(SysTick 周波数や追加 pin mux など、ボード固有の振る舞いに手を入れたい改良で詰む)。Freestanding なら SDK 由来ファイルがすべてローカルにコピーされ、`board/` を含めた全ファイルを編集して動作を変えられる。
+
+詳細・既存サンプルの状況・回避策は [CLAUDE.md の「サンプル取り込み方針」](CLAUDE.md#サンプル取り込み方針app-type-の選択) を参照。
+
 ## 進捗マトリクス
 
 **番号付けの規則**: カテゴリごとに 10 刻みのベース番号を割り当て、原本=ベース、改良版=ベース+1 以降。
@@ -19,8 +30,8 @@ NXP **FRDM-MCXN947** 評価ボード(MCXN947 / Cortex-M33 デュアルコア)で
 | 00  | `00_hello_world`              | 原本   | `examples/demo_apps/hello_world/` + `_boards/frdmmcxn947/demo_apps/hello_world/`                       | -      | -    | -    | 取り込み済み。ビルド環境未確定 |
 | 01  | `01_hello_world_my`           | 改良版 | (上記をベース)                                                                                       | -      | -    | -    | 未着手 |
 | 10  | `10_led_blinky_peripheral`    | 原本   | `examples/demo_apps/led_blinky_peripheral/` + `_boards/frdmmcxn947/demo_apps/led_blinky/`(★名前不一致)| OK     | -    | -    | 取り込み済み。SysTick で赤 LED を 2 秒周期点滅。CLI で configure→build→`.elf` 生成確認済 |
-| 11  | `11_led_blinky_peripheral`    | 改良版 | `10_led_blinky_peripheral` をベースに改造                                                              | OK     | OK   | NG   | #1 ソフト PWM ブリージング **失敗**: ローカル `board/cm33_core0/hardware_init.c` への SysTick 編集がビルドに反映されず、SysTick が 1 Hz のまま PWM ロジックが回り LED ほぼ点灯せず。`PROJECT_BOARD_PORT_PATH` が SDK パスを指す構成のためローカル board/ 配下は無視される(教訓は 12 へ) |
-| 12  | `12_led_blinky_rgb`           | 改良版 | `10_led_blinky_peripheral` をベースに RGB 3 色シーケンス点灯化                                          | OK     | -    | -    | 全改造を `app/led_blinky.c` 内で完結(緑/青の pin mux + GPIO1 クロック + LED INIT を自前で追加)。CLI ビルド通過、書き込み未確認 |
+| 11  | `11_led_blinky_peripheral`    | 改良版 | `10_led_blinky_peripheral` をベースに改造                                                              | OK     | OK   | OK   | #1 ソフト PWM ブリージング(2 秒周期で赤 LED が明 → 暗)。**初版は board/hardware_init.c の SysTick 編集が build 反映されず失敗** → main() で `SysTick_Config(600UL)` 再呼び出しする方式に修正して動作。ローカル board/ 編集が無視される罠の記録は README 内 |
+| 12  | `12_led_blinky_rgb`           | 改良版 | `10_led_blinky_peripheral` をベースに RGB 3 色シーケンス点灯化                                          | OK     | OK   | OK   | 全改造を `app/led_blinky.c` 内で完結(緑/青の pin mux + GPIO1 クロック + LED INIT を自前で追加)。1 秒ごとに 赤 → 緑 → 青 → 赤 と循環 |
 | 20  | `20_tflm_label_image`         | 原本   | `examples/eiq_examples/tflm_label_image/` + `_boards/frdmmcxn947/eiq_examples/tflm_label_image/`       | -      | -    | -    | 取り込み済み。NPU 用 MobileNet V1 で stopwatch 画像を分類。共通モジュール(image/timer/model)依存のため当フォルダ単独ではビルド不可 |
 
 凡例: `-` 未実施 / `OK` 確認済 / `NG` 失敗 / `WIP` 着手中

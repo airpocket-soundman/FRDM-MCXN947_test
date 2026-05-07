@@ -85,6 +85,41 @@ FRDM-MCXN947_test/
 - ルートの `README.md` に **進捗マトリクス**(サンプル名 / ビルド可否 / 動作可否 / メモ)を維持
 - `common/` には複数サンプルで共有する自作コードのみ(SDK 由来コードは置かない)
 
+## サンプル取り込み方針(App type の選択)
+
+MCUXpresso for VS Code の **Import Example from Repository** ダイアログには **App type** という選択肢があり、SDK ファイルをどう扱うかが切り替わる:
+
+| App type | 中身 | この repo での位置付け |
+|---|---|---|
+| **Repository application** | プロジェクトは `mcuxsdk/examples/...` 配下に作られ、**SDK ソースは参照のみ(ローカルにコピーされない)** | 疎通確認・原本そのまま動かすだけのケース。**`board/` 配下のローカル編集は build に反映されない** ので改造には向かない |
+| **Freestanding application** | SDK の必要ファイルが指定先に **コピー**されて自己完結型になる | **改良版を作るときの原則。`board/`(`hardware_init.c` / `pin_mux.c` / `peripherals.c` 等)を編集して動作を変えたい場合は必須** |
+
+> RAM 実行 / Flash 書き込みは App type ではなく **Build Configuration**(リンカスクリプト `*_ram.ld` / `*_flash.ld`)で決まる点に注意。
+
+### 本リポでの運用ルール
+
+- **原本(`<NN>_<sample>`)**: Repository application でも Freestanding でもよい(差分は出ない)
+- **改良版(`<NN+1>_<sample>_xxx`)**: **Freestanding application で取り込む**ことを原則とする
+  - 理由: Repository application で取り込むと `CMakeLists.txt` の `PROJECT_BOARD_PORT_PATH` が SDK ツリー内の絶対パスを指すため、**ローカル `board/` 配下のファイルを編集しても build に反映されない**(ビルドは SDK 側の正本を拾う)。`pin_mux` 追加・SysTick 周波数変更など、ボード固有の振る舞いに手を入れたい改良で詰む
+  - Freestanding なら SDK 由来ファイルがすべてローカルにコピーされ、`PROJECT_BOARD_PORT_PATH` もローカルに向くので、**`board/` を含めた全ファイルを普通に編集して動作を変えられる**
+  - また、改良版の git diff が「SDK 原本との差分も含めて」綺麗に追跡できる利点がある(原本フォルダとの diff で改造実体が見える)
+
+### 既存サンプル(2026-05 時点)
+
+`00_hello_world` / `10_led_blinky_peripheral` / `20_tflm_label_image` / `11_led_blinky_peripheral` / `12_led_blinky_rgb` は **すべて Repository application で取り込んだ状態のまま**。原本はそのままで問題ない。
+
+改良版である **`11_*` と `12_*` も Repository application のまま** だが、**改造内容を `app/led_blinky.c` の中だけで完結**させ(SDK 既定値を `main()` で上書き再設定する方式で)動作させている。これは **回避策であって理想形ではない** ので、今後新しく作る改良版は Freestanding で取り直す。
+
+### Repository application を Freestanding に切り替える時
+
+SDK 由来ファイルの編集に踏み込みたくなった場合は、
+
+1. MCUXpresso 拡張の Import Example for Repository をもう一度開く
+2. 同じテンプレートを **App type: Freestanding application** で別の場所(別フォルダ番号)に取り込み直す
+3. 自分の `app/led_blinky.c` などの改造分をマージして、古い Repository application 版は archive 扱い
+
+の手順が安全。既存フォルダを「中身だけ Freestanding 化」しようとすると `CMakeLists.txt` の構造が大きく変わるため、新規取り込みのほうが速い。
+
 ## .gitignore の方針
 
 以下は除外する:
