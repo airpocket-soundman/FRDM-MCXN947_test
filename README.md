@@ -1,0 +1,2 @@
+# FRDM-MCXN947_test
+FRDM-MCXN947_test
